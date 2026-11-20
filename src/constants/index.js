@@ -85,3 +85,25 @@ export const LOG_COLORS = Object.freeze({
   [LOG_LEVELS.HTTP]: "magenta",
   [LOG_LEVELS.DEBUG]: "blue",
 });
+
+// Una entrega solo avanza hacia adelante, un paso por vez.
+export const DELIVERY_STATUS_TRANSITIONS = Object.freeze({
+  [DELIVERY_STATUS.ASSIGNED]: [DELIVERY_STATUS.PICKED_UP],
+  [DELIVERY_STATUS.PICKED_UP]: [DELIVERY_STATUS.IN_TRANSIT],
+  [DELIVERY_STATUS.IN_TRANSIT]: [DELIVERY_STATUS.DELIVERED],
+  [DELIVERY_STATUS.DELIVERED]: [],
+});
+
+// Al cambiar el estado de la entrega, el pedido pasa a su estado equivalente.
+export const DELIVERY_TO_ORDER_STATUS = Object.freeze({
+  [DELIVERY_STATUS.ASSIGNED]: ORDER_STATUS.ASSIGNED,
+  [DELIVERY_STATUS.PICKED_UP]: ORDER_STATUS.PICKED_UP,
+  [DELIVERY_STATUS.IN_TRANSIT]: ORDER_STATUS.IN_TRANSIT,
+  [DELIVERY_STATUS.DELIVERED]: ORDER_STATUS.DELIVERED,
+});
+
+export const PAGINATION = Object.freeze({
+  DEFAULT_PAGE: 1,
+  DEFAULT_LIMIT: 10,
+  MAX_LIMIT: 50,
+});

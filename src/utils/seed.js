@@ -27,6 +27,13 @@ const TEST_USERS = [
     password: "user1234",
     role: USER_ROLES.USER,
   },
+  {
+    first_name: "Pedro",
+    last_name: "Repartidor",
+    email: "driver@shipnow.com",
+    password: "driver1234",
+    role: USER_ROLES.DRIVER,
+  },
 ];
 
 const TEST_PRODUCTS = [

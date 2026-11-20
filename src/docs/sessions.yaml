@@ -1,0 +1,291 @@
+# Documentación OpenAPI de ShipNow API. Se carga desde src/docs/swagger.config.js
+paths:
+  /api/health:
+    get:
+      tags:
+      - Health
+      summary: Estado del servidor
+      description: Comprueba que la API está activa.
+      responses:
+        '200':
+          description: Servidor activo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  message:
+                    type: string
+                    example: Servidor activo
+  /api/sessions/register:
+    post:
+      tags:
+      - Sessions
+      summary: Registrar usuario
+      description: 'Crea un usuario nuevo. El rol siempre es `user`: si se envía otro `role` en el body, se ignora.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - first_name
+              - last_name
+              - email
+              - password
+              properties:
+                first_name:
+                  type: string
+                  example: Ana
+                last_name:
+                  type: string
+                  example: Pérez
+                email:
+                  type: string
+                  format: email
+                  example: ana.perez@test.com
+                password:
+                  type: string
+                  minLength: 8
+                  example: '12345678'
+            example:
+              first_name: Ana
+              last_name: Pérez
+              email: ana.perez@test.com
+              password: '12345678'
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: 'Datos inválidos: MISSING_FIELDS, INVALID_EMAIL, INVALID_PASSWORD, INVALID_JSON'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                MISSING_FIELDS:
+                  summary: MISSING_FIELDS
+                  value:
+                    status: error
+                    error: MISSING_FIELDS
+                    message: Faltan campos obligatorios
+                INVALID_EMAIL:
+                  summary: INVALID_EMAIL
+                  value:
+                    status: error
+                    error: INVALID_EMAIL
+                    message: El formato del email no es válido
+                INVALID_PASSWORD:
+                  summary: INVALID_PASSWORD
+                  value:
+                    status: error
+                    error: INVALID_PASSWORD
+                    message: La contraseña debe tener al menos 8 caracteres
+                INVALID_JSON:
+                  summary: INVALID_JSON
+                  value:
+                    status: error
+                    error: INVALID_JSON
+                    message: El cuerpo de la petición no es un JSON válido
+        '409':
+          description: 'Conflicto con datos existentes: EMAIL_EXISTS'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                EMAIL_EXISTS:
+                  summary: EMAIL_EXISTS
+                  value:
+                    status: error
+                    error: EMAIL_EXISTS
+                    message: El email ya está registrado
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+  /api/sessions/login:
+    post:
+      tags:
+      - Sessions
+      summary: Iniciar sesión
+      description: 'Valida las credenciales y guarda el JWT en la cookie `currentUser` (httpOnly, 1 hora). Usuarios
+        de prueba creados con `npm run seed`: `admin@shipnow.com` / `admin1234`, `user@shipnow.com` / `user1234`
+        (cliente) y `driver@shipnow.com` / `driver1234` (repartidor).'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@shipnow.com
+                password:
+                  type: string
+                  example: admin1234
+            example:
+              email: admin@shipnow.com
+              password: admin1234
+      responses:
+        '200':
+          description: Login correcto
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Login correcto
+          headers:
+            Set-Cookie:
+              description: Cookie currentUser con el JWT
+              schema:
+                type: string
+        '400':
+          description: 'Datos inválidos: INVALID_JSON'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_JSON:
+                  summary: INVALID_JSON
+                  value:
+                    status: error
+                    error: INVALID_JSON
+                    message: El cuerpo de la petición no es un JSON válido
+        '401':
+          description: 'No autenticado: INVALID_CREDENTIALS'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_CREDENTIALS:
+                  summary: INVALID_CREDENTIALS
+                  value:
+                    status: error
+                    error: INVALID_CREDENTIALS
+                    message: Credenciales inválidas
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+  /api/sessions/current:
+    get:
+      tags:
+      - Sessions
+      summary: Usuario de la sesión actual
+      description: Devuelve los datos del JWT de la sesión (id, email y rol).
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: Sesión activa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserResponse'
+        '401':
+          description: 'No autenticado: UNAUTHORIZED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UNAUTHORIZED:
+                  summary: UNAUTHORIZED
+                  value:
+                    status: error
+                    error: UNAUTHORIZED
+                    message: No autenticado
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+  /api/sessions/logout:
+    post:
+      tags:
+      - Sessions
+      summary: Cerrar sesión
+      description: Borra la cookie de sesión.
+      responses:
+        '200':
+          description: Sesión cerrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                status: success
+                message: Sesión cerrada
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor

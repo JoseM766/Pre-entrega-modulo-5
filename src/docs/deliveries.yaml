@@ -1,0 +1,442 @@
+# Documentación OpenAPI de ShipNow API. Se carga desde src/docs/swagger.config.js
+paths:
+  /api/deliveries:
+    get:
+      tags:
+      - Deliveries
+      summary: Listar entregas
+      description: Un `admin` ve todas; un `driver` solo las que tiene asignadas.
+      security:
+      - cookieAuth: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        description: Filtra por estado de la entrega
+        schema:
+          $ref: '#/components/schemas/DeliveryStatus'
+      - name: page
+        in: query
+        required: false
+        description: Número de página
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        required: false
+        description: Resultados por página (máximo 50)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+      responses:
+        '200':
+          description: Listado paginado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryListResponse'
+        '400':
+          description: 'Datos inválidos: INVALID_DELIVERY_STATUS'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_DELIVERY_STATUS:
+                  summary: INVALID_DELIVERY_STATUS
+                  value:
+                    status: error
+                    error: INVALID_DELIVERY_STATUS
+                    message: El estado indicado no es válido para una entrega
+        '401':
+          description: 'No autenticado: UNAUTHORIZED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UNAUTHORIZED:
+                  summary: UNAUTHORIZED
+                  value:
+                    status: error
+                    error: UNAUTHORIZED
+                    message: No autenticado
+        '403':
+          description: 'Sin permisos: FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FORBIDDEN:
+                  summary: FORBIDDEN
+                  value:
+                    status: error
+                    error: FORBIDDEN
+                    message: No tenés permisos para realizar esta acción
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+    post:
+      tags:
+      - Deliveries
+      summary: Asignar un pedido a un repartidor
+      description: Solo `admin`. Crea la entrega en estado `assigned` y pasa el pedido a `assigned`.
+      security:
+      - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - orderId
+              - driverId
+              properties:
+                orderId:
+                  type: string
+                  description: Id del pedido a asignar (debe estar en estado `created`)
+                  example: 665f1c2e8f1b2a0012a4b3c1
+                driverId:
+                  type: string
+                  description: Id de un usuario con rol `driver`
+                  example: 665f1c2e8f1b2a0012a4b3c1
+                priority:
+                  $ref: '#/components/schemas/DeliveryPriority'
+                  description: Opcional, por defecto la del pedido
+            example:
+              orderId: 665f1c2e8f1b2a0012a4b3c1
+              driverId: 665f1c2e8f1b2a0012a4b3c2
+              priority: urgent
+      responses:
+        '201':
+          description: Entrega creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryResponse'
+        '400':
+          description: 'Datos inválidos: MISSING_FIELDS, INVALID_ORDER_STATUS, INVALID_DRIVER, INVALID_PRIORITY,
+            INVALID_JSON'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                MISSING_FIELDS:
+                  summary: MISSING_FIELDS
+                  value:
+                    status: error
+                    error: MISSING_FIELDS
+                    message: Faltan campos obligatorios
+                INVALID_ORDER_STATUS:
+                  summary: INVALID_ORDER_STATUS
+                  value:
+                    status: error
+                    error: INVALID_ORDER_STATUS
+                    message: El estado indicado no es válido para un pedido
+                INVALID_DRIVER:
+                  summary: INVALID_DRIVER
+                  value:
+                    status: error
+                    error: INVALID_DRIVER
+                    message: El usuario indicado no es un repartidor
+                INVALID_PRIORITY:
+                  summary: INVALID_PRIORITY
+                  value:
+                    status: error
+                    error: INVALID_PRIORITY
+                    message: La prioridad indicada no es válida
+                INVALID_JSON:
+                  summary: INVALID_JSON
+                  value:
+                    status: error
+                    error: INVALID_JSON
+                    message: El cuerpo de la petición no es un JSON válido
+        '401':
+          description: 'No autenticado: UNAUTHORIZED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UNAUTHORIZED:
+                  summary: UNAUTHORIZED
+                  value:
+                    status: error
+                    error: UNAUTHORIZED
+                    message: No autenticado
+        '403':
+          description: 'Sin permisos: FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FORBIDDEN:
+                  summary: FORBIDDEN
+                  value:
+                    status: error
+                    error: FORBIDDEN
+                    message: No tenés permisos para realizar esta acción
+        '404':
+          description: 'Recurso inexistente: ORDER_NOT_FOUND, USER_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ORDER_NOT_FOUND:
+                  summary: ORDER_NOT_FOUND
+                  value:
+                    status: error
+                    error: ORDER_NOT_FOUND
+                    message: El pedido no existe
+                USER_NOT_FOUND:
+                  summary: USER_NOT_FOUND
+                  value:
+                    status: error
+                    error: USER_NOT_FOUND
+                    message: El usuario no existe
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+  /api/deliveries/{id}:
+    get:
+      tags:
+      - Deliveries
+      summary: Obtener una entrega
+      description: Un `admin` ve cualquiera; un `driver` solo las suyas (si es de otro repartidor, `403`).
+      security:
+      - cookieAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Id de la entrega
+        schema:
+          type: string
+          example: 665f1c2e8f1b2a0012a4b3c1
+      responses:
+        '200':
+          description: Entrega encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryResponse'
+        '401':
+          description: 'No autenticado: UNAUTHORIZED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UNAUTHORIZED:
+                  summary: UNAUTHORIZED
+                  value:
+                    status: error
+                    error: UNAUTHORIZED
+                    message: No autenticado
+        '403':
+          description: 'Sin permisos: FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FORBIDDEN:
+                  summary: FORBIDDEN
+                  value:
+                    status: error
+                    error: FORBIDDEN
+                    message: No tenés permisos para realizar esta acción
+        '404':
+          description: 'Recurso inexistente: DELIVERY_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                DELIVERY_NOT_FOUND:
+                  summary: DELIVERY_NOT_FOUND
+                  value:
+                    status: error
+                    error: DELIVERY_NOT_FOUND
+                    message: La entrega no existe
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+  /api/deliveries/{id}/status:
+    patch:
+      tags:
+      - Deliveries
+      summary: Avanzar el estado de una entrega
+      description: 'Lo pueden usar el `admin` y el `driver` dueño de la entrega. El estado solo avanza un paso por
+        vez: `assigned` → `picked_up` → `in_transit` → `delivered`. El estado del pedido se actualiza junto con
+        el de la entrega.'
+      security:
+      - cookieAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Id de la entrega
+        schema:
+          type: string
+          example: 665f1c2e8f1b2a0012a4b3c1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - status
+              properties:
+                status:
+                  $ref: '#/components/schemas/DeliveryStatus'
+            example:
+              status: picked_up
+      responses:
+        '200':
+          description: Entrega actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryResponse'
+        '400':
+          description: 'Datos inválidos: MISSING_FIELDS, INVALID_DELIVERY_STATUS, INVALID_JSON'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                MISSING_FIELDS:
+                  summary: MISSING_FIELDS
+                  value:
+                    status: error
+                    error: MISSING_FIELDS
+                    message: Faltan campos obligatorios
+                INVALID_DELIVERY_STATUS:
+                  summary: INVALID_DELIVERY_STATUS
+                  value:
+                    status: error
+                    error: INVALID_DELIVERY_STATUS
+                    message: El estado indicado no es válido para una entrega
+                INVALID_JSON:
+                  summary: INVALID_JSON
+                  value:
+                    status: error
+                    error: INVALID_JSON
+                    message: El cuerpo de la petición no es un JSON válido
+        '401':
+          description: 'No autenticado: UNAUTHORIZED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UNAUTHORIZED:
+                  summary: UNAUTHORIZED
+                  value:
+                    status: error
+                    error: UNAUTHORIZED
+                    message: No autenticado
+        '403':
+          description: 'Sin permisos: FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FORBIDDEN:
+                  summary: FORBIDDEN
+                  value:
+                    status: error
+                    error: FORBIDDEN
+                    message: No tenés permisos para realizar esta acción
+        '404':
+          description: 'Recurso inexistente: DELIVERY_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                DELIVERY_NOT_FOUND:
+                  summary: DELIVERY_NOT_FOUND
+                  value:
+                    status: error
+                    error: DELIVERY_NOT_FOUND
+                    message: La entrega no existe
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos

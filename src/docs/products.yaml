@@ -1,0 +1,489 @@
+# Documentación OpenAPI de ShipNow API. Se carga desde src/docs/swagger.config.js
+paths:
+  /api/products:
+    get:
+      tags:
+      - Products
+      summary: Listar productos
+      description: Público. Por defecto muestra solo productos `available` (con stock); los agotados se piden con
+        `?status=out_of_stock`.
+      parameters:
+      - name: status
+        in: query
+        required: false
+        description: Estado del producto (por defecto `available`)
+        schema:
+          $ref: '#/components/schemas/ProductStatus'
+      - name: category
+        in: query
+        required: false
+        description: Filtra por categoría
+        schema:
+          type: string
+          example: embalaje
+      - name: page
+        in: query
+        required: false
+        description: Número de página
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: limit
+        in: query
+        required: false
+        description: Resultados por página (máximo 50)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+      - name: sort
+        in: query
+        required: false
+        description: 'Orden: campo o lista separada por comas; con `-` adelante es descendente'
+        schema:
+          type: string
+          example: -price
+      responses:
+        '200':
+          description: Listado paginado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+        '400':
+          description: 'Datos inválidos: INVALID_PRODUCT_STATUS'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_PRODUCT_STATUS:
+                  summary: INVALID_PRODUCT_STATUS
+                  value:
+                    status: error
+                    error: INVALID_PRODUCT_STATUS
+                    message: El estado indicado no es válido para un producto
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+    post:
+      tags:
+      - Products
+      summary: Crear producto
+      description: Solo `admin`. El estado se calcula según el stock.
+      security:
+      - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - description
+              - category
+              - price
+              properties:
+                name:
+                  type: string
+                  example: Bolsa courier
+                description:
+                  type: string
+                  example: Bolsa para envíos
+                category:
+                  type: string
+                  example: embalaje
+                price:
+                  type: number
+                  minimum: 0
+                  example: 150
+                stock:
+                  type: integer
+                  minimum: 0
+                  default: 0
+                  example: 200
+            example:
+              name: Bolsa courier
+              description: Bolsa para envíos
+              category: embalaje
+              price: 150
+              stock: 200
+      responses:
+        '201':
+          description: Producto creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          description: 'Datos inválidos: MISSING_FIELDS, INVALID_PRICE, INVALID_STOCK, INVALID_JSON'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                MISSING_FIELDS:
+                  summary: MISSING_FIELDS
+                  value:
+                    status: error
+                    error: MISSING_FIELDS
+                    message: Faltan campos obligatorios
+                INVALID_PRICE:
+                  summary: INVALID_PRICE
+                  value:
+                    status: error
+                    error: INVALID_PRICE
+                    message: El precio debe ser un número mayor o igual a 0
+                INVALID_STOCK:
+                  summary: INVALID_STOCK
+                  value:
+                    status: error
+                    error: INVALID_STOCK
+                    message: El stock debe ser un entero mayor o igual a 0
+                INVALID_JSON:
+                  summary: INVALID_JSON
+                  value:
+                    status: error
+                    error: INVALID_JSON
+                    message: El cuerpo de la petición no es un JSON válido
+        '401':
+          description: 'No autenticado: UNAUTHORIZED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UNAUTHORIZED:
+                  summary: UNAUTHORIZED
+                  value:
+                    status: error
+                    error: UNAUTHORIZED
+                    message: No autenticado
+        '403':
+          description: 'Sin permisos: FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FORBIDDEN:
+                  summary: FORBIDDEN
+                  value:
+                    status: error
+                    error: FORBIDDEN
+                    message: No tenés permisos para realizar esta acción
+        '409':
+          description: 'Conflicto con datos existentes: PRODUCT_EXISTS'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                PRODUCT_EXISTS:
+                  summary: PRODUCT_EXISTS
+                  value:
+                    status: error
+                    error: PRODUCT_EXISTS
+                    message: Ya existe un producto con ese nombre
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+  /api/products/{id}:
+    get:
+      tags:
+      - Products
+      summary: Obtener un producto
+      description: Público.
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Id del producto
+        schema:
+          type: string
+          example: 665f1c2e8f1b2a0012a4b3c1
+      responses:
+        '200':
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '404':
+          description: 'Recurso inexistente: PRODUCT_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                PRODUCT_NOT_FOUND:
+                  summary: PRODUCT_NOT_FOUND
+                  value:
+                    status: error
+                    error: PRODUCT_NOT_FOUND
+                    message: El producto no existe
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+    put:
+      tags:
+      - Products
+      summary: Editar un producto
+      description: Solo `admin`. Si se envía `stock`, el estado se recalcula.
+      security:
+      - cookieAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Id del producto
+        schema:
+          type: string
+          example: 665f1c2e8f1b2a0012a4b3c1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: 'Cualquier subconjunto de campos. El `status` no se envía: se recalcula solo cuando cambia
+                el stock.'
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                category:
+                  type: string
+                price:
+                  type: number
+                  minimum: 0
+                stock:
+                  type: integer
+                  minimum: 0
+            example:
+              stock: 0
+      responses:
+        '200':
+          description: Producto actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          description: 'Datos inválidos: INVALID_PRICE, INVALID_STOCK, INVALID_JSON'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_PRICE:
+                  summary: INVALID_PRICE
+                  value:
+                    status: error
+                    error: INVALID_PRICE
+                    message: El precio debe ser un número mayor o igual a 0
+                INVALID_STOCK:
+                  summary: INVALID_STOCK
+                  value:
+                    status: error
+                    error: INVALID_STOCK
+                    message: El stock debe ser un entero mayor o igual a 0
+                INVALID_JSON:
+                  summary: INVALID_JSON
+                  value:
+                    status: error
+                    error: INVALID_JSON
+                    message: El cuerpo de la petición no es un JSON válido
+        '401':
+          description: 'No autenticado: UNAUTHORIZED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UNAUTHORIZED:
+                  summary: UNAUTHORIZED
+                  value:
+                    status: error
+                    error: UNAUTHORIZED
+                    message: No autenticado
+        '403':
+          description: 'Sin permisos: FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FORBIDDEN:
+                  summary: FORBIDDEN
+                  value:
+                    status: error
+                    error: FORBIDDEN
+                    message: No tenés permisos para realizar esta acción
+        '404':
+          description: 'Recurso inexistente: PRODUCT_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                PRODUCT_NOT_FOUND:
+                  summary: PRODUCT_NOT_FOUND
+                  value:
+                    status: error
+                    error: PRODUCT_NOT_FOUND
+                    message: El producto no existe
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+    delete:
+      tags:
+      - Products
+      summary: Eliminar un producto
+      description: Solo `admin`.
+      security:
+      - cookieAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Id del producto
+        schema:
+          type: string
+          example: 665f1c2e8f1b2a0012a4b3c1
+      responses:
+        '200':
+          description: Producto eliminado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                status: success
+                message: Producto eliminado
+        '401':
+          description: 'No autenticado: UNAUTHORIZED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UNAUTHORIZED:
+                  summary: UNAUTHORIZED
+                  value:
+                    status: error
+                    error: UNAUTHORIZED
+                    message: No autenticado
+        '403':
+          description: 'Sin permisos: FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FORBIDDEN:
+                  summary: FORBIDDEN
+                  value:
+                    status: error
+                    error: FORBIDDEN
+                    message: No tenés permisos para realizar esta acción
+        '404':
+          description: 'Recurso inexistente: PRODUCT_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                PRODUCT_NOT_FOUND:
+                  summary: PRODUCT_NOT_FOUND
+                  value:
+                    status: error
+                    error: PRODUCT_NOT_FOUND
+                    message: El producto no existe
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos

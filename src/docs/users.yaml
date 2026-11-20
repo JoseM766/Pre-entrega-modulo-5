@@ -1,0 +1,143 @@
+# Documentación OpenAPI de ShipNow API. Se carga desde src/docs/swagger.config.js
+paths:
+  /api/users:
+    get:
+      tags:
+      - Users
+      summary: Listar usuarios
+      description: Lista todos los usuarios (sin contraseña). Solo `admin`.
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: Listado de usuarios
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '401':
+          description: 'No autenticado: UNAUTHORIZED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UNAUTHORIZED:
+                  summary: UNAUTHORIZED
+                  value:
+                    status: error
+                    error: UNAUTHORIZED
+                    message: No autenticado
+        '403':
+          description: 'Sin permisos: FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FORBIDDEN:
+                  summary: FORBIDDEN
+                  value:
+                    status: error
+                    error: FORBIDDEN
+                    message: No tenés permisos para realizar esta acción
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+  /api/users/{id}:
+    get:
+      tags:
+      - Users
+      summary: Obtener un usuario por id
+      description: Solo `admin`.
+      security:
+      - cookieAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Id del usuario
+        schema:
+          type: string
+          example: 665f1c2e8f1b2a0012a4b3c1
+      responses:
+        '200':
+          description: Usuario encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: 'No autenticado: UNAUTHORIZED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                UNAUTHORIZED:
+                  summary: UNAUTHORIZED
+                  value:
+                    status: error
+                    error: UNAUTHORIZED
+                    message: No autenticado
+        '403':
+          description: 'Sin permisos: FORBIDDEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FORBIDDEN:
+                  summary: FORBIDDEN
+                  value:
+                    status: error
+                    error: FORBIDDEN
+                    message: No tenés permisos para realizar esta acción
+        '404':
+          description: 'Recurso inexistente: USER_NOT_FOUND'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                USER_NOT_FOUND:
+                  summary: USER_NOT_FOUND
+                  value:
+                    status: error
+                    error: USER_NOT_FOUND
+                    message: El usuario no existe
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos

@@ -28,3 +28,24 @@ export const isValidPrice = (price) => {
 export const isValidStock = (stock) => {
   return Number.isInteger(stock) && stock >= 0;
 };
+
+// --- Validadores de Order ---
+
+export const hasRequiredOrderFields = ({ items, deliveryAddress }) => {
+  return Boolean(items !== undefined && deliveryAddress);
+};
+
+export const areValidOrderItems = (items) => {
+  if (!Array.isArray(items) || items.length === 0) return false;
+
+  return items.every(
+    (item) =>
+      item &&
+      typeof item.name === "string" &&
+      item.name.trim() !== "" &&
+      Number.isInteger(item.quantity) &&
+      item.quantity >= 1 &&
+      typeof item.price === "number" &&
+      item.price >= 0
+  );
+};

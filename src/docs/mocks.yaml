@@ -1,0 +1,534 @@
+# Documentación OpenAPI de ShipNow API. Se carga desde src/docs/swagger.config.js
+paths:
+  /api/mocks/users:
+    get:
+      tags:
+      - Mocks
+      summary: Usuarios simulados (no guarda)
+      description: 'Herramienta de desarrollo: el router `/api/mocks` **no está disponible si `NODE_ENV=production`**.
+        Devuelve usuarios falsos sin guardarlos en la base. Alias: `/api/mocks/mockingusers`.'
+      parameters:
+      - name: qty
+        in: query
+        required: false
+        description: Cantidad de datos a generar (entero de 0 a 100, por defecto 10)
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 10
+      - name: role
+        in: query
+        required: false
+        description: Rol de los usuarios (si se omite, mezcla de `user` y `driver`)
+        schema:
+          type: string
+          enum:
+          - user
+          - driver
+      responses:
+        '200':
+          description: Usuarios simulados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MockUser'
+        '400':
+          description: 'Datos inválidos: INVALID_MOCK_AMOUNT, INVALID_MOCK_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_MOCK_AMOUNT:
+                  summary: INVALID_MOCK_AMOUNT
+                  value:
+                    status: error
+                    error: INVALID_MOCK_AMOUNT
+                    message: '"qty" debe ser un número entero'
+                INVALID_MOCK_ROLE:
+                  summary: INVALID_MOCK_ROLE
+                  value:
+                    status: error
+                    error: INVALID_MOCK_ROLE
+                    message: El rol indicado no es válido para generar usuarios de prueba
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+  /api/mocks/mockingusers:
+    get:
+      tags:
+      - Mocks
+      summary: Usuarios simulados (alias)
+      description: Igual que `GET /api/mocks/users`.
+      parameters:
+      - name: qty
+        in: query
+        required: false
+        description: Cantidad de datos a generar (entero de 0 a 100, por defecto 10)
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 10
+      - name: role
+        in: query
+        required: false
+        description: Rol de los usuarios (si se omite, mezcla de `user` y `driver`)
+        schema:
+          type: string
+          enum:
+          - user
+          - driver
+      responses:
+        '200':
+          description: Usuarios simulados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MockUser'
+        '400':
+          description: 'Datos inválidos: INVALID_MOCK_AMOUNT, INVALID_MOCK_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_MOCK_AMOUNT:
+                  summary: INVALID_MOCK_AMOUNT
+                  value:
+                    status: error
+                    error: INVALID_MOCK_AMOUNT
+                    message: '"qty" debe ser un número entero'
+                INVALID_MOCK_ROLE:
+                  summary: INVALID_MOCK_ROLE
+                  value:
+                    status: error
+                    error: INVALID_MOCK_ROLE
+                    message: El rol indicado no es válido para generar usuarios de prueba
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+  /api/mocks/orders:
+    get:
+      tags:
+      - Mocks
+      summary: Pedidos simulados (no guarda)
+      description: 'Herramienta de desarrollo: el router `/api/mocks` **no está disponible si `NODE_ENV=production`**.
+        Devuelve pedidos falsos, con clientes inventados, sin guardarlos. Alias: `/api/mocks/mockingorders`.'
+      parameters:
+      - name: qty
+        in: query
+        required: false
+        description: Cantidad de datos a generar (entero de 0 a 100, por defecto 10)
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 10
+      responses:
+        '200':
+          description: Pedidos simulados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MockOrder'
+        '400':
+          description: 'Datos inválidos: INVALID_MOCK_AMOUNT'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_MOCK_AMOUNT:
+                  summary: INVALID_MOCK_AMOUNT
+                  value:
+                    status: error
+                    error: INVALID_MOCK_AMOUNT
+                    message: '"qty" debe ser un número entero'
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+  /api/mocks/mockingorders:
+    get:
+      tags:
+      - Mocks
+      summary: Pedidos simulados (alias)
+      description: Igual que `GET /api/mocks/orders`.
+      parameters:
+      - name: qty
+        in: query
+        required: false
+        description: Cantidad de datos a generar (entero de 0 a 100, por defecto 10)
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 10
+      responses:
+        '200':
+          description: Pedidos simulados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MockOrder'
+        '400':
+          description: 'Datos inválidos: INVALID_MOCK_AMOUNT'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_MOCK_AMOUNT:
+                  summary: INVALID_MOCK_AMOUNT
+                  value:
+                    status: error
+                    error: INVALID_MOCK_AMOUNT
+                    message: '"qty" debe ser un número entero'
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+  /api/mocks/deliveries:
+    get:
+      tags:
+      - Mocks
+      summary: Entregas simuladas (no guarda)
+      description: 'Herramienta de desarrollo: el router `/api/mocks` **no está disponible si `NODE_ENV=production`**.
+        Devuelve entregas falsas, cada una asociada a un pedido y a un repartidor inventados, sin guardarlas.'
+      parameters:
+      - name: qty
+        in: query
+        required: false
+        description: Cantidad de datos a generar (entero de 0 a 100, por defecto 10)
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 10
+      responses:
+        '200':
+          description: Entregas simuladas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  payload:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MockDelivery'
+        '400':
+          description: 'Datos inválidos: INVALID_MOCK_AMOUNT'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_MOCK_AMOUNT:
+                  summary: INVALID_MOCK_AMOUNT
+                  value:
+                    status: error
+                    error: INVALID_MOCK_AMOUNT
+                    message: '"qty" debe ser un número entero'
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+  /api/mocks/seed:
+    post:
+      tags:
+      - Mocks
+      summary: Insertar usuarios de prueba en MongoDB
+      description: 'Herramienta de desarrollo: el router `/api/mocks` **no está disponible si `NODE_ENV=production`**.
+        Inserta `qty` usuarios falsos (clientes y repartidores) en la base. La contraseña de todos es `coder123`.
+        Esta respuesta no lleva el campo `status`.'
+      parameters:
+      - name: qty
+        in: query
+        required: false
+        description: Cantidad de datos a generar (entero de 0 a 100, por defecto 10)
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 10
+      - name: role
+        in: query
+        required: false
+        description: Rol de los usuarios (si se omite, mezcla de `user` y `driver`)
+        schema:
+          type: string
+          enum:
+          - user
+          - driver
+      responses:
+        '201':
+          description: Usuarios insertados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  insertados:
+                    type: integer
+                    example: 10
+                  coleccion:
+                    type: string
+                    example: users
+        '400':
+          description: 'Datos inválidos: INVALID_MOCK_AMOUNT, INVALID_MOCK_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_MOCK_AMOUNT:
+                  summary: INVALID_MOCK_AMOUNT
+                  value:
+                    status: error
+                    error: INVALID_MOCK_AMOUNT
+                    message: '"qty" debe ser un número entero'
+                INVALID_MOCK_ROLE:
+                  summary: INVALID_MOCK_ROLE
+                  value:
+                    status: error
+                    error: INVALID_MOCK_ROLE
+                    message: El rol indicado no es válido para generar usuarios de prueba
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR, MOCK_GENERATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+                MOCK_GENERATION_ERROR:
+                  summary: MOCK_GENERATION_ERROR
+                  value:
+                    status: error
+                    error: MOCK_GENERATION_ERROR
+                    message: No se pudieron generar o cargar los datos de prueba
+  /api/mocks/generateData:
+    post:
+      tags:
+      - Mocks
+      summary: Generar datos de prueba relacionados en MongoDB
+      description: 'Herramienta de desarrollo: el router `/api/mocks` **no está disponible si `NODE_ENV=production`**.
+        Inserta usuarios, repartidores, pedidos y entregas **relacionados entre sí**: cada pedido pertenece a un
+        cliente real y cada entrega a un pedido y un repartidor reales. Si se piden pedidos sin clientes (o entregas
+        sin repartidores) y no hay existentes en la base, no se inserta nada.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Todas las cantidades son opcionales (enteros de 0 a 100) pero al menos una debe ser mayor
+                a 0. No puede haber más `deliveries` que `orders`.
+              properties:
+                users:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  example: 5
+                  description: Clientes a crear
+                drivers:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  example: 3
+                  description: Repartidores a crear
+                orders:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  example: 20
+                  description: Pedidos a crear (usan los clientes nuevos o, si no hay, los existentes)
+                deliveries:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  example: 8
+                  description: Entregas a crear (cada una apunta a un pedido y a un repartidor reales)
+            example:
+              users: 5
+              drivers: 3
+              orders: 20
+              deliveries: 8
+      responses:
+        '201':
+          description: Datos insertados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  insertados:
+                    type: object
+                    properties:
+                      users:
+                        type: integer
+                        example: 5
+                      drivers:
+                        type: integer
+                        example: 3
+                      orders:
+                        type: integer
+                        example: 20
+                      deliveries:
+                        type: integer
+                        example: 8
+        '400':
+          description: 'Datos inválidos: INVALID_MOCK_AMOUNT, MOCK_NO_CUSTOMERS, MOCK_NO_DRIVERS, INVALID_JSON'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INVALID_MOCK_AMOUNT:
+                  summary: INVALID_MOCK_AMOUNT
+                  value:
+                    status: error
+                    error: INVALID_MOCK_AMOUNT
+                    message: '"users" no puede ser negativo'
+                MOCK_NO_CUSTOMERS:
+                  summary: MOCK_NO_CUSTOMERS
+                  value:
+                    status: error
+                    error: MOCK_NO_CUSTOMERS
+                    message: No hay clientes disponibles para asignar a los pedidos
+                MOCK_NO_DRIVERS:
+                  summary: MOCK_NO_DRIVERS
+                  value:
+                    status: error
+                    error: MOCK_NO_DRIVERS
+                    message: No hay repartidores disponibles para asignar a las entregas
+                INVALID_JSON:
+                  summary: INVALID_JSON
+                  value:
+                    status: error
+                    error: INVALID_JSON
+                    message: El cuerpo de la petición no es un JSON válido
+        '500':
+          description: 'Error interno: INTERNAL_SERVER_ERROR, DATABASE_ERROR, MOCK_GENERATION_ERROR'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                INTERNAL_SERVER_ERROR:
+                  summary: INTERNAL_SERVER_ERROR
+                  value:
+                    status: error
+                    error: INTERNAL_SERVER_ERROR
+                    message: Error interno del servidor
+                DATABASE_ERROR:
+                  summary: DATABASE_ERROR
+                  value:
+                    status: error
+                    error: DATABASE_ERROR
+                    message: Ocurrió un error con la base de datos
+                MOCK_GENERATION_ERROR:
+                  summary: MOCK_GENERATION_ERROR
+                  value:
+                    status: error
+                    error: MOCK_GENERATION_ERROR
+                    message: No se pudieron generar o cargar los datos de prueba
